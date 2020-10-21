@@ -2,7 +2,7 @@
 
 namespace VisibilityPolygon
 {
-    class Wall
+    public class Wall
     {
         public bool visible;
         public Vector2D V1;
@@ -11,6 +11,10 @@ namespace VisibilityPolygon
         {
             V1 = v1;
             V2 = v2;
+            visible = false;
+        }
+        public Wall()
+        {
             visible = false;
         }
     }

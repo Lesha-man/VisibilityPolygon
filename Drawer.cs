@@ -8,59 +8,31 @@ namespace VisibilityPolygon
 {
     class Drawer
     {
-        PictureBox pictureBox;
-        Graphics g;
-        Bitmap bmp;
-        Scene scene;
-        public Drawer(PictureBox pBox, Scene sc)
+        private const float PI = (float)Math.PI;
+        private const float DegsPerRadians = 57.3f;
+        private PictureBox pictureBox;
+        private Graphics g;
+        private Bitmap bmp;
+
+        public Drawer(PictureBox pBox)
         {
             pictureBox = pBox;
             bmp = new Bitmap(pictureBox.Width, pictureBox.Height);
             g = Graphics.FromImage(bmp);
-            scene = sc;
             g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
         }
 
-        public void DrawAllLightOff()
+        public void DrawAllLightOff(Scene scene)
         {
             g.Clear(Color.Black);
-            DrawCam();
-            foreach (var wall in scene.VisWalls)
-            {
-                Vector2D LV1 = (wall.V1 - scene.Camera.Location).Normalise() * scene.Camera.VisionDistance * 2 + scene.Camera.Location;
-                Vector2D LV2 = (wall.V2 - scene.Camera.Location).Normalise() * scene.Camera.VisionDistance * 2 + scene.Camera.Location;
-                Vector2D pointToWall = Geometry.MinDistansePointLineSigment(wall.V1, wall.V2, scene.Camera.Location);
-                if (pointToWall != wall.V1 && pointToWall != wall.V2)
-                {
-                    Vector2D LV3 = (pointToWall - scene.Camera.Location).Normalise() * 1000 + pointToWall;
-                    g.FillPolygon(Brushes.Black, new PointF[] { new PointF(wall.V1.X, wall.V1.Y), new PointF(wall.V2.X, wall.V2.Y), new PointF(LV2.X, LV2.Y), new PointF(LV3.X, LV3.Y), new PointF(LV1.X, LV1.Y) });
-                }
-                else
-                {
-                    g.FillPolygon(Brushes.Black, new PointF[] { new PointF(wall.V1.X, wall.V1.Y), new PointF(wall.V2.X, wall.V2.Y), new PointF(LV2.X, LV2.Y), new PointF(LV1.X, LV1.Y) });
-                }
-            }
+            DrowUnvisualRegions(scene, Color.Black);
             pictureBox.Image = bmp;
         }
-        public void DrawAllLightOn()
+
+        public void DrawAllLightOn(Scene scene)
         {
             g.Clear(Color.White);
-            DrawCam();
-            foreach (var wall in scene.VisWalls)
-            {
-                Vector2D LV1 = (wall.V1 - scene.Camera.Location).Normalise() * scene.Camera.VisionDistance * 2 + scene.Camera.Location;
-                Vector2D LV2 = (wall.V2 - scene.Camera.Location).Normalise() * scene.Camera.VisionDistance * 2 + scene.Camera.Location;
-                Vector2D pointToWall = Geometry.MinDistansePointLineSigment(wall.V1, wall.V2, scene.Camera.Location);
-                if (pointToWall != wall.V1 && pointToWall != wall.V2)
-                {
-                    Vector2D LV3 = (pointToWall - scene.Camera.Location).Normalise() * scene.Camera.VisionDistance * 2 + scene.Camera.Location;
-                    g.FillPolygon(Brushes.White, new PointF[] { new PointF(wall.V1.X, wall.V1.Y), new PointF(wall.V2.X, wall.V2.Y), new PointF(LV2.X, LV2.Y), new PointF(LV3.X, LV3.Y), new PointF(LV1.X, LV1.Y) });
-                }
-                else
-                {
-                    g.FillPolygon(Brushes.White, new PointF[] { new PointF(wall.V1.X, wall.V1.Y), new PointF(wall.V2.X, wall.V2.Y), new PointF(LV2.X, LV2.Y), new PointF(LV1.X, LV1.Y) });
-                }
-            }
+            DrowUnvisualRegions(scene, Color.White);
             foreach (var wall in scene.Walls)
             {
                 DrawWall(wall, Brushes.Black);
@@ -76,29 +48,54 @@ namespace VisibilityPolygon
             pictureBox.Image = bmp;
         }
 
+        private void DrowUnvisualRegions(Scene scene, Color color)
+        {
+            DrawCam(scene.MainCamera);
+            foreach (var wall in scene.VisWalls)
+            {
+                Vector2D LV1 = (wall.V1 - scene.MainCamera.Location).Normalize(scene.MainCamera.VisionDistance * 2) + scene.MainCamera.Location;
+                Vector2D LV2 = (wall.V2 - scene.MainCamera.Location).Normalize(scene.MainCamera.VisionDistance * 2) + scene.MainCamera.Location;
+                Vector2D pointToWall = Geometry.MinDistansePointLineSigment(wall.V1, wall.V2, scene.MainCamera.Location);
+                Vector2D LV3 = LV2;
+                if (pointToWall != wall.V1 && pointToWall != wall.V2)
+                {
+                    LV3 = (pointToWall - scene.MainCamera.Location).Normalize() * scene.MainCamera.VisionDistance * 2 + pointToWall;
+                }
+                g.FillPolygon(
+                       new SolidBrush(color),
+                       new PointF[]
+                       {
+                            new PointF(wall.V1.X, wall.V1.Y),
+                            new PointF(wall.V2.X, wall.V2.Y),
+                            new PointF(LV2.X, LV2.Y),
+                            new PointF(LV3.X, LV3.Y),
+                            new PointF(LV1.X, LV1.Y)
+                       });
+            }
+        }
+
         public void DrawWall(Wall wall, Brush brush)
         {
             g.DrawLine(new Pen(brush, 4), new PointF(wall.V1.X, wall.V1.Y), new PointF(wall.V2.X, wall.V2.Y));
         }
 
-        public void DrawCam()
+        public void DrawCam(Camera camera)
         {
-            g.DrawEllipse(new Pen(Brushes.Blue, 1), scene.Camera.Location.X - scene.Camera.ROfBody, scene.Camera.Location.Y - scene.Camera.ROfBody, scene.Camera.ROfBody + scene.Camera.ROfBody, scene.Camera.ROfBody + scene.Camera.ROfBody);
-            float alf = (float)Math.Asin(scene.Camera.Direction.Y);
-            if (scene.Camera.Direction.X > 0)
-                g.FillPie(Brushes.Yellow, scene.Camera.Location.X - scene.Camera.VisionDistance, scene.Camera.Location.Y - scene.Camera.VisionDistance, scene.Camera.VisionDistance + scene.Camera.VisionDistance, scene.Camera.VisionDistance + scene.Camera.VisionDistance, (alf - scene.Camera.HalfViewAngleRadians) * 57.3f, scene.Camera.HalfViewAngleRadians * 114.6f);
-            else
-                g.FillPie(Brushes.Yellow, scene.Camera.Location.X - scene.Camera.VisionDistance, scene.Camera.Location.Y - scene.Camera.VisionDistance, scene.Camera.VisionDistance + scene.Camera.VisionDistance, scene.Camera.VisionDistance + scene.Camera.VisionDistance, (3.1416f - alf + scene.Camera.HalfViewAngleRadians) * 57.3f, -scene.Camera.HalfViewAngleRadians * 114.6f);
-        }
-
-        public void DrawPolygon(Brush brush, List<float> coordMas)
-        {
-            if (coordMas.Count % 2 == 1)
+            g.DrawEllipse(new Pen(Brushes.Blue, 1), camera.Location.X - camera.ROfBody, camera.Location.Y - camera.ROfBody, camera.ROfBody + camera.ROfBody, camera.ROfBody + camera.ROfBody);
+            float alf = (float)Math.Asin(camera.Direction.Y);
+            float startAngle;
+            float endAngle;
+            if (camera.Direction.X < 0)
             {
-                throw new Exception("Ban");
+                startAngle = (PI - alf + camera.HalfViewAngleRadians) * DegsPerRadians;
+                endAngle = -camera.HalfViewAngleRadians * 2.0f * DegsPerRadians;
             }
-            PointF[] points = new PointF[coordMas.Count / 2];
-            g.DrawPolygon(new Pen(brush, 4), points);
+            else
+            {
+                startAngle = (alf - camera.HalfViewAngleRadians) * DegsPerRadians;
+                endAngle = camera.HalfViewAngleRadians * 2.0f * DegsPerRadians;
+            }
+            g.FillPie(Brushes.Yellow, camera.Location.X - camera.VisionDistance, camera.Location.Y - camera.VisionDistance, camera.VisionDistance + camera.VisionDistance, camera.VisionDistance + camera.VisionDistance, startAngle, endAngle);
         }
     }
 }

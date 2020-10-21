@@ -1,44 +1,68 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
+using System.IO;
 using System.Windows.Forms;
+using System.Xml.Serialization;
 using VectorAndPolygonMath;
 
 namespace VisibilityPolygon
 {
     public partial class Form1 : Form
     {
-        Scene scene;
-        Drawer drawer;
-        Keys key;
-        Dictionary<Keys, Action> KeysActivitis  = new Dictionary<Keys, Action>();
+        private Point oldCursorPos;
+        private readonly Dictionary<Keys, Action> KeysActivitis;
+        private Scene scene;
+        private Drawer drawer;
+        private Keys key;
+        
+        event EventHandler CursorPosChenget;
+
+        public Point OldCursorPos
+        {
+            get => oldCursorPos;
+            set
+            {
+                CursorPosChenget?.Invoke(this, null);
+                oldCursorPos = value;
+            }
+        }
         public Form1()
         {
             InitializeComponent();
-            KeysActivitis.Add(Keys.W, () => SceneUpd(new Vector2D(scene.Camera.Location.X, scene.Camera.Location.Y - 4)));
-            KeysActivitis.Add(Keys.A, () => SceneUpd(new Vector2D(scene.Camera.Location.X - 4, scene.Camera.Location.Y))); 
-            KeysActivitis.Add(Keys.S, () => SceneUpd(new Vector2D(scene.Camera.Location.X, scene.Camera.Location.Y + 4)));
-            KeysActivitis.Add(Keys.D, () => SceneUpd(new Vector2D(scene.Camera.Location.X + 4, scene.Camera.Location.Y)));
+            KeysActivitis = new Dictionary<Keys, Action>
+            {
+                { Keys.W, () => SceneUpd(new Vector2D(scene.MainCamera.Location.X, scene.MainCamera.Location.Y - 4)) },
+                { Keys.A, () => SceneUpd(new Vector2D(scene.MainCamera.Location.X - 4, scene.MainCamera.Location.Y)) },
+                { Keys.S, () => SceneUpd(new Vector2D(scene.MainCamera.Location.X, scene.MainCamera.Location.Y + 4)) },
+                { Keys.D, () => SceneUpd(new Vector2D(scene.MainCamera.Location.X + 4, scene.MainCamera.Location.Y)) },
+                //{ Keys.Space, () => TickUpdate() }
+            };
+            CursorPosChenget += myMouseMove;
+            KeyDown += myKeyDown;
+        }
+
+        private void myMouseMove(object sender, EventArgs e)
+        {
+            TickUpdate();
+        }
+
+        private void myKeyDown(object sender, EventArgs e)
+        {
+            key = ((KeyEventArgs)e).KeyCode;
+            TickUpdate();
         }
 
         private void Form1_Load(object sender, EventArgs e)
         {
-            List<Wall> walls = new List<Wall>();
-            walls.Add(new Wall(new Vector2D(10, 10), new Vector2D(100, 100)));
-            walls.Add(new Wall(new Vector2D(1000, 1000), new Vector2D(2000, 1000)));
-            walls.Add(new Wall(new Vector2D(1000, 900), new Vector2D(1100, 900)));
-            walls.Add(new Wall(new Vector2D(110, 10), new Vector2D(200, 100)));
-            walls.Add(new Wall(new Vector2D(10, 210), new Vector2D(100, 300)));
-            walls.Add(new Wall(new Vector2D(490, 490), new Vector2D(700, 700)));
-            walls.Add(new Wall(new Vector2D(670, 700), new Vector2D(800, 800)));
-            walls.Add(new Wall(new Vector2D(900, 900), new Vector2D(800, 770)));
-            walls.Add(new Wall(new Vector2D(1500, 500), new Vector2D(1700, 700)));
-            walls.Add(new Wall(new Vector2D(1500, 400), new Vector2D(1700, 400)));
-            walls.Add(new Wall(new Vector2D(500, 0), new Vector2D(0, 500)));
-            walls.Add(new Wall(new Vector2D(500, 100), new Vector2D(100, 500)));
-            //walls.Add(new Wall(new Vector2D(700, 250), new Vector2D(600, 350)));
-            scene = new Scene(walls, new Cam(new Vector2D(pictureBox1.Width / 2, pictureBox1.Height / 2), 1000, 1f, 30));
-            drawer = new Drawer(pictureBox1, scene);
+            XmlSerializer xml = new XmlSerializer(typeof(Scene));
+            using (FileStream file = new FileStream("data.xml", FileMode.Open))
+            {
+                scene = xml.Deserialize(file) as Scene;
+            }
+            drawer = new Drawer(pictureBox1);
         }
+
         private void TickUpdate()
         {
             if (KeysActivitis.ContainsKey(key))
@@ -46,18 +70,16 @@ namespace VisibilityPolygon
                 KeysActivitis[key]();
             }
             else
-                SceneUpd(scene.Camera.Location);
-            key = 0;
+            {
+                SceneUpd(scene.MainCamera.Location);
+            }
             if (checkBox1.Checked)
-            {
-                drawer.DrawAllLightOn();
-
-            }
+                drawer.DrawAllLightOn(scene);
             else
-            {
-                drawer.DrawAllLightOff();
-            }
+                drawer.DrawAllLightOff(scene);
+            key = 0;
         }
+
         private void SceneUpd(Vector2D locOffset)
         {
             scene.Update(new Vector2D(Cursor.Position.X, Cursor.Position.Y), locOffset);
@@ -65,27 +87,35 @@ namespace VisibilityPolygon
 
         private void pictureBox1_Click(object sender, EventArgs e)
         {
-            TickUpdate();
+            OldCursorPos = OldCursorPos != Cursor.Position ? Cursor.Position : OldCursorPos;
         }
 
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)
         {
+            XmlSerializer xml = new XmlSerializer(typeof(Scene));
+            using (FileStream file = new FileStream("data.xml", FileMode.Create))
+            {
+                xml.Serialize(file, scene);
+            }
+            drawer = new Drawer(pictureBox1);
         }
-
 
         private void timer1_Tick(object sender, EventArgs e)
         {
-            TickUpdate();
-        }
-
-        private void Form1_KeyDown(object sender, KeyEventArgs e)
-        {
-            key = e.KeyCode;
+            if (OldCursorPos != Cursor.Position)
+            {
+                OldCursorPos = Cursor.Position;
+            }
         }
 
         private void checkBox2_CheckedChanged(object sender, EventArgs e)
         {
             timer1.Enabled = !checkBox2.Checked;
+        }
+
+        private void checkBox1_CheckedChanged(object sender, EventArgs e)
+        {
+            TickUpdate();
         }
     }
 }
