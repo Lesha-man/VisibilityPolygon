@@ -36,7 +36,6 @@ namespace VisibilityPolygon
                 { Keys.A, () => SceneUpd(new Vector2D(scene.MainCamera.Location.X - 4, scene.MainCamera.Location.Y)) },
                 { Keys.S, () => SceneUpd(new Vector2D(scene.MainCamera.Location.X, scene.MainCamera.Location.Y + 4)) },
                 { Keys.D, () => SceneUpd(new Vector2D(scene.MainCamera.Location.X + 4, scene.MainCamera.Location.Y)) },
-                //{ Keys.Space, () => TickUpdate() }
             };
             CursorPosChenget += myMouseMove;
             KeyDown += myKeyDown;

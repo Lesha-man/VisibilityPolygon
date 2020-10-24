@@ -5,7 +5,7 @@ VisualStudioVersion = 16.0.30611.23
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "VisibilityPolygon", "VisibilityPolygon.csproj", "{D37080A3-DE85-4258-A4B9-2E9A462FBED7}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "VectorAndPolygonMath", "..\VectorMathDLL\VectorAndPolygonMath.csproj", "{AD310D3E-4961-4A6B-81DB-662663C196C5}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "VectorAndPolygonMath", "..\VectorAndPolygonMath\VectorAndPolygonMath.csproj", "{A25F4CE0-B349-4C57-99C1-326A4DA425C6}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -17,10 +17,10 @@ Global
 		{D37080A3-DE85-4258-A4B9-2E9A462FBED7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D37080A3-DE85-4258-A4B9-2E9A462FBED7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D37080A3-DE85-4258-A4B9-2E9A462FBED7}.Release|Any CPU.Build.0 = Release|Any CPU
-		{AD310D3E-4961-4A6B-81DB-662663C196C5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{AD310D3E-4961-4A6B-81DB-662663C196C5}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{AD310D3E-4961-4A6B-81DB-662663C196C5}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{AD310D3E-4961-4A6B-81DB-662663C196C5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A25F4CE0-B349-4C57-99C1-326A4DA425C6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A25F4CE0-B349-4C57-99C1-326A4DA425C6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A25F4CE0-B349-4C57-99C1-326A4DA425C6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A25F4CE0-B349-4C57-99C1-326A4DA425C6}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

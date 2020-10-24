@@ -11,7 +11,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\VectorMathDLL\VectorAndPolygonMath.csproj" />
+    <ProjectReference Include="..\VectorAndPolygonMath\VectorAndPolygonMath.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="data.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>
