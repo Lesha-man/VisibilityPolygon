@@ -7,10 +7,10 @@ namespace VisibilityPolygon
     [Serializable]
     public class Scene
     {
+        public Camera MainCamera;
+        public List<Wall> VisWalls;
         public List<Wall> Walls;
         public List<Wall> WallsInVisZone;
-        public List<Wall> VisWalls;
-        public Camera MainCamera;
         public Scene(List<Wall> walls, Camera cam)
         {
             Walls = walls;
@@ -30,24 +30,18 @@ namespace VisibilityPolygon
             FindVisWalls();
         }
 
-        void FindWallsInVisZone()
+        bool Colis(Vector2D move)
         {
-            WallsInVisZone = new List<Wall>();
-            for (int i = 0; i < Walls.Count; i++)
+            foreach (var wall in Walls)
             {
-                if (Geometry.LineSide(MainCamera.Location, new Vector2D(MainCamera.Direction.Y, -MainCamera.Direction.X) + MainCamera.Location, Walls[i].V1) > 0 || Geometry.LineSide(MainCamera.Location, new Vector2D(MainCamera.Direction.Y, -MainCamera.Direction.X) + MainCamera.Location, Walls[i].V2) > 0)
+                if ((Geometry.MinDistansePointLineSigment(wall.V1, wall.V2, move) - move).SqrLength < MainCamera.ROfBody * MainCamera.ROfBody)
                 {
-                    if ((Geometry.LineSide(MainCamera.Location, MainCamera.VisBorder2 + MainCamera.Location, Walls[i].V1) > 0 ||
-                        Geometry.LineSide(MainCamera.Location, MainCamera.VisBorder2 + MainCamera.Location, Walls[i].V2) > 0)
-                        &&
-                        (Geometry.LineSide(MainCamera.Location, MainCamera.VisBorder1 + MainCamera.Location, Walls[i].V1) < 0 ||
-                        Geometry.LineSide(MainCamera.Location, MainCamera.VisBorder1 + MainCamera.Location, Walls[i].V2) < 0))
-                    {
-                        WallsInVisZone.Add(Walls[i]);
-                    }
+                    return false;
                 }
             }
+            return true;
         }
+
         void FindVisWalls()
         {
             VisWalls = new List<Wall>();
@@ -75,36 +69,23 @@ namespace VisibilityPolygon
             }
         }
 
-        private bool WallPointIn(Vector2D point)
+        void FindWallsInVisZone()
         {
-            if (Geometry.LineSide(MainCamera.Location, MainCamera.VisBorder2 + MainCamera.Location, point) > 0 &&
-            Geometry.LineSide(MainCamera.Location, MainCamera.VisBorder1 + MainCamera.Location, point) < 0)
+            WallsInVisZone = new List<Wall>();
+            for (int i = 0; i < Walls.Count; i++)
             {
-                float SqrMinLength = GetNearestWallAndLengthRayCast(MainCamera.Location, point, out Wall visWall);
-                if (visWall != null)
+                if (Geometry.LineSide(MainCamera.Location, new Vector2D(MainCamera.Direction.Y, -MainCamera.Direction.X) + MainCamera.Location, Walls[i].V1) > 0 || Geometry.LineSide(MainCamera.Location, new Vector2D(MainCamera.Direction.Y, -MainCamera.Direction.X) + MainCamera.Location, Walls[i].V2) > 0)
                 {
-                    if (!VisWalls.Contains(visWall))
-                        VisWalls.Add(visWall);
-
-                    if (SqrMinLength > (point - MainCamera.Location).SqrLength)
-                        return true;
-                }
-                else
-                    return true;
-            }
-            return false;
-        }
-
-        bool Colis(Vector2D move)
-        {
-            foreach (var wall in Walls)
-            {
-                if ((Geometry.MinDistansePointLineSigment(wall.V1, wall.V2, move) - move).SqrLength < MainCamera.ROfBody * MainCamera.ROfBody)
-                {
-                    return false;
+                    if ((Geometry.LineSide(MainCamera.Location, MainCamera.VisBorder2 + MainCamera.Location, Walls[i].V1) > 0 ||
+                        Geometry.LineSide(MainCamera.Location, MainCamera.VisBorder2 + MainCamera.Location, Walls[i].V2) > 0)
+                        &&
+                        (Geometry.LineSide(MainCamera.Location, MainCamera.VisBorder1 + MainCamera.Location, Walls[i].V1) < 0 ||
+                        Geometry.LineSide(MainCamera.Location, MainCamera.VisBorder1 + MainCamera.Location, Walls[i].V2) < 0))
+                    {
+                        WallsInVisZone.Add(Walls[i]);
+                    }
                 }
             }
-            return true;
         }
         float GetNearestWallAndLengthRayCast(Vector2D a, Vector2D b, out Wall NearestHitedWall)  //From a to b
         {
@@ -127,6 +108,26 @@ namespace VisibilityPolygon
                 }
             }
             return sqrMinLength;
+        }
+
+        private bool WallPointIn(Vector2D point)
+        {
+            if (Geometry.LineSide(MainCamera.Location, MainCamera.VisBorder2 + MainCamera.Location, point) > 0 &&
+            Geometry.LineSide(MainCamera.Location, MainCamera.VisBorder1 + MainCamera.Location, point) < 0)
+            {
+                float SqrMinLength = GetNearestWallAndLengthRayCast(MainCamera.Location, point, out Wall visWall);
+                if (visWall != null)
+                {
+                    if (!VisWalls.Contains(visWall))
+                        VisWalls.Add(visWall);
+
+                    if (SqrMinLength > (point - MainCamera.Location).SqrLength)
+                        return true;
+                }
+                else
+                    return true;
+            }
+            return false;
         }
     }
 }

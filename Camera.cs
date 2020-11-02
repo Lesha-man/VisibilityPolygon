@@ -7,17 +7,17 @@ namespace VisibilityPolygon
     {
         private Vector2D visBorder1;
         private Vector2D visBorder2;
-        public float HalfViewAngleRadians { get; set; }
-        public float VisionDistance { get; set; }
-        public float ROfBody { get; set; }
-        public Vector2D Location { get; set; }
         public Vector2D Direction { get; set; }
+        public float HalfViewAngleRadians { get; set; }
+        public Vector2D Location { get; set; }
+        public float ROfBody { get; set; }
         public Vector2D VisBorder1 { get => visBorder1; }
         public Vector2D VisBorder2 { get => visBorder2; }
-
+        public float VisionDistance { get; set; }
         public Camera()
         {
         }
+
         public Camera(Vector2D location, float visionDistance, float radians, float rOfBody)
         {
             VisionDistance = visionDistance;
@@ -25,6 +25,7 @@ namespace VisibilityPolygon
             HalfViewAngleRadians = radians / 2;
             ROfBody = rOfBody;
         }
+
         public void UpdateTo(Vector2D direction, Vector2D loc)
         {
             Location = loc;

@@ -10,23 +10,12 @@ namespace VisibilityPolygon
 {
     public partial class Form1 : Form
     {
-        private Point oldCursorPos;
+        private Wall tempWall;
         private readonly Dictionary<Keys, Action> KeysActivitis;
-        private Scene scene;
         private Drawer drawer;
         private Keys key;
-        
-        event EventHandler CursorPosChenget;
-
-        public Point OldCursorPos
-        {
-            get => oldCursorPos;
-            set
-            {
-                CursorPosChenget?.Invoke(this, null);
-                oldCursorPos = value;
-            }
-        }
+        private Point oldCursorPos;
+        private Scene scene;
         public Form1()
         {
             InitializeComponent();
@@ -41,15 +30,35 @@ namespace VisibilityPolygon
             KeyDown += myKeyDown;
         }
 
-        private void myMouseMove(object sender, EventArgs e)
+        event EventHandler CursorPosChenget;
+
+        public Point OldCursorPos
+        {
+            get => oldCursorPos;
+            set
+            {
+                CursorPosChenget?.Invoke(this, null);
+                oldCursorPos = value;
+            }
+        }
+        private void checkBox1_CheckedChanged(object sender, EventArgs e)
         {
             TickUpdate();
         }
 
-        private void myKeyDown(object sender, EventArgs e)
+        private void checkBox2_CheckedChanged(object sender, EventArgs e)
         {
-            key = ((KeyEventArgs)e).KeyCode;
-            TickUpdate();
+            timer1.Enabled = !checkBox2.Checked;
+        }
+
+        private void Form1_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            XmlSerializer xml = new XmlSerializer(typeof(Scene));
+            using (FileStream file = new FileStream("data.xml", FileMode.Create))
+            {
+                xml.Serialize(file, scene);
+            }
+            drawer = new Drawer(pictureBox1);
         }
 
         private void Form1_Load(object sender, EventArgs e)
@@ -60,6 +69,26 @@ namespace VisibilityPolygon
                 scene = xml.Deserialize(file) as Scene;
             }
             drawer = new Drawer(pictureBox1);
+        }
+
+        private void myKeyDown(object sender, EventArgs e)
+        {
+            key = ((KeyEventArgs)e).KeyCode;
+            TickUpdate();
+        }
+
+        private void myMouseMove(object sender, EventArgs e)
+        {
+            TickUpdate();
+        }
+        private void pictureBox1_Click(object sender, EventArgs e)
+        {
+            OldCursorPos = OldCursorPos != Cursor.Position ? Cursor.Position : OldCursorPos;
+        }
+
+        private void SceneUpd(Vector2D locOffset)
+        {
+            scene.Update(new Vector2D(Cursor.Position.X, Cursor.Position.Y), locOffset);
         }
 
         private void TickUpdate()
@@ -78,27 +107,6 @@ namespace VisibilityPolygon
                 drawer.DrawAllLightOff(scene);
             key = 0;
         }
-
-        private void SceneUpd(Vector2D locOffset)
-        {
-            scene.Update(new Vector2D(Cursor.Position.X, Cursor.Position.Y), locOffset);
-        }
-
-        private void pictureBox1_Click(object sender, EventArgs e)
-        {
-            OldCursorPos = OldCursorPos != Cursor.Position ? Cursor.Position : OldCursorPos;
-        }
-
-        private void Form1_FormClosing(object sender, FormClosingEventArgs e)
-        {
-            XmlSerializer xml = new XmlSerializer(typeof(Scene));
-            using (FileStream file = new FileStream("data.xml", FileMode.Create))
-            {
-                xml.Serialize(file, scene);
-            }
-            drawer = new Drawer(pictureBox1);
-        }
-
         private void timer1_Tick(object sender, EventArgs e)
         {
             if (OldCursorPos != Cursor.Position)
@@ -106,15 +114,22 @@ namespace VisibilityPolygon
                 OldCursorPos = Cursor.Position;
             }
         }
-
-        private void checkBox2_CheckedChanged(object sender, EventArgs e)
+        private void timer2_Tick(object sender, EventArgs e)
         {
-            timer1.Enabled = !checkBox2.Checked;
+            tempWall.V2 = new Vector2D(Cursor.Position.X, Cursor.Position.Y);
         }
 
-        private void checkBox1_CheckedChanged(object sender, EventArgs e)
+        private void pictureBox1_MouseDown(object sender, MouseEventArgs e)
         {
-            TickUpdate();
+            Vector2D clickDown = new Vector2D(Cursor.Position.X, Cursor.Position.Y);
+            tempWall = new Wall(clickDown, clickDown);
+            scene.Walls.Add(tempWall);
+            timer2.Enabled = true;
+        }
+
+        private void pictureBox1_MouseUp(object sender, MouseEventArgs e)
+        {
+            timer2.Enabled = false;
         }
     }
 }
